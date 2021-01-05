@@ -1,5 +1,6 @@
 package com.example.springsecuritydemo.config;
 
+import com.example.springsecuritydemo.permission.ApplicationUserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,8 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 //permit few urls to all users
                 .antMatchers("/", "index"/*,"/css/*","/js/*"*/)
                 .permitAll()
+                .antMatchers("/api/**")
+                .hasRole(ApplicationUserRole.ADMIN.name())
                 .anyRequest()       // any request must
                 .authenticated()    // be authenticated
                 .and()
@@ -46,17 +49,25 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     @Bean
     protected UserDetailsService userDetailsService() {
-        /*
-          without password encoder
-          java.lang.IllegalArgumentException: There is no PasswordEncoder mapped for the id "null"
-
-          */
+        /**
+         * without password encoder
+         * java.lang.IllegalArgumentException: There is no PasswordEncoder mapped for the id "null"
+         */
         //LOG.info("Authenticating...");
         UserDetails user1 = User.builder()
-                .username("user1")
+                .username("student1")
                 .password(passwordEncoder.encode("password"))
-                .roles("Student")
+                .roles(ApplicationUserRole.STUDENT.name())
                 .build();
-        return new InMemoryUserDetailsManager(user1);
+
+        UserDetails adminUser = User.builder()
+                .username("adminUser")
+                .password(passwordEncoder.encode("admin"))
+                .roles(ApplicationUserRole.ADMIN.name())
+                .build();
+
+        return new InMemoryUserDetailsManager(
+                user1, adminUser
+        );
     }
 }
